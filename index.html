@@ -1,274 +1,342 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Flashcards</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Flashcards</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  <!-- Font: Patrick Hand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 
-<style>
-  * { box-sizing: border-box; }
+  <style>
+    :root{
+      --bg:#000;
+      --card:#0c0c0c;
+      --btn:#f1f1f1;
+      --btnText:#111;
+      --shadow: rgba(0,0,0,.35);
+      --radius: 22px;
+    }
 
-  body{
-    margin:0;
-    background:#0f0f0f;
-    color:#fff;
-    font-family:'Patrick Hand', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    min-height:100vh;
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:#fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow-x:hidden;
+    }
 
-    /* SHIFT EVERYTHING UP */
-    display:flex;
-    justify-content:center;
-    align-items:flex-start; /* <-- top, not center */
-  }
+    .wrap{
+      min-height:100vh;
+      padding: 10px 14px 16px; /* shifted up */
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      gap:10px;
+    }
 
-  .app{
-    width:100%;
-    max-width:480px;
-    padding:10px 16px 16px;  /* less top padding */
-  }
+    .cardStage{
+      width: min(92vw, 520px);
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 18px 40px var(--shadow);
+      position: relative;
+      perspective: 1200px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  .card{
-    background:#000;
-    border-radius:16px;
-    width:100%;
-    aspect-ratio:1/1;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    cursor:pointer;
-    user-select:none;
-    overflow:hidden;
-  }
+    .card3d{
+      width:100%;
+      height:100%;
+      position:absolute;
+      inset:0;
+      transform-style: preserve-3d;
+      transition: transform 260ms ease;
+    }
+    .cardStage.flipped .card3d{
+      transform: rotateY(180deg);
+    }
 
-  .card img{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    display:block;
-  }
+    .face{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      backface-visibility: hidden;
+      padding: 14px;
+    }
 
-  .textSide{
-    padding:20px;
-    font-size:2.5rem;
-    line-height:1.15;
-  }
+    .front{
+      transform: rotateY(0deg);
+    }
 
-  .controlsRow{
-    display:flex;
-    gap:12px;
-    margin-top:12px;
-  }
+    .front img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      border-radius: calc(var(--radius) - 6px);
+    }
 
-  .controlsRow button{
-    flex:1;
-  }
+    .back{
+      transform: rotateY(180deg);
+      padding: 22px;
+    }
 
-  .shuffleRow{
-    margin-top:12px;
-  }
-  .shuffleRow button{
-    width:100%;
-  }
+    .phrase{
+      font-family: "Patrick Hand", cursive;
+      font-size: clamp(34px, 7vw, 64px);
+      line-height: 1.05;
+      text-align:center;
+      letter-spacing: .3px;
+    }
 
-  button{
-    font-family:inherit;
-    font-size:1.2rem;
-    padding:14px 10px;
-    border-radius:12px;
-    border:none;
-    background:#f1f1f1;
-    color:#000;
-    cursor:pointer;
-  }
+    /* Controls */
+    .controls{
+      width: min(92vw, 520px);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top: 2px;
+    }
 
-  button:active{ transform:scale(0.97); }
+    .row{
+      display:flex;
+      gap:10px;
+      width:100%;
+      justify-content:center;
+      align-items:center;
+    }
 
-  /* Back-side play control row */
-  .backControls{
-    width:100%;
-    margin-top:10px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-  }
-  .backControls.hidden{ display:none; }
+    .btn{
+      border:0;
+      background: var(--btn);
+      color: var(--btnText);
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+      min-height: 56px;
+      padding: 0 18px;
+      font-size: 22px;
+      font-weight: 700;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-  audio{
-    width:100%;
-    max-width:320px;
-    height:34px;
-  }
+    .btn:active{ transform: translateY(1px); }
 
-  /* Slightly tighten on small phones */
-  @media (max-width:420px){
-    .app{ padding-top:8px; }
-    button{ padding:13px 10px; }
-  }
-</style>
+    .btnWide{
+      flex:1;
+    }
+
+    .btnShuffle{
+      width: 100%;
+      max-width: 260px;
+      font-size: 20px;
+      min-height: 50px;
+    }
+
+    .icon{
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .shuffleIcon{
+      font-size: 20px;
+    }
+  </style>
 </head>
 
 <body>
-<div class="app">
+  <div class="wrap">
+    <div id="cardStage" class="cardStage" aria-label="Flashcard">
+      <div class="card3d">
+        <div class="face front">
+          <img id="cardImg" alt="flashcard image" />
+        </div>
+        <div class="face back">
+          <div id="cardText" class="phrase"></div>
+        </div>
+      </div>
+    </div>
 
-  <div class="card" id="card"></div>
+    <div class="controls">
+      <div class="row">
+        <button id="prevBtn" class="btn btnWide" aria-label="Previous">
+          <span class="icon">«</span>
+        </button>
 
-  <!-- Visible ONLY when flipped. You requested it exists, but NO sound should play while text is showing. -->
-  <div class="backControls hidden" id="backControls">
-    <audio id="audioBack" controls>
-      <source id="audioBackSource" src="" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
+        <button id="playBtn" class="btn btnWide" aria-label="Flip and play">
+          <span class="icon">▶</span>
+        </button>
+
+        <button id="nextBtn" class="btn btnWide" aria-label="Next">
+          <span class="icon">»</span>
+        </button>
+      </div>
+
+      <div class="row">
+        <button id="shuffleBtn" class="btn btnShuffle" aria-label="Shuffle">
+          <span class="shuffleIcon">🔀</span>
+          <span>Shuffle</span>
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Row 1: Prev / Flip+Play / Next (double arrows as requested) -->
-  <div class="controlsRow">
-    <button id="prev" type="button"><<</button>
-    <button id="flipPlay" type="button">▶</button>
-    <button id="next" type="button">>></button>
-  </div>
+  <script>
+    // ====== EDIT ONLY THIS LIST FOR NEW SETS ======
+    const cards = [
+      {
+        image: "https://i.postimg.cc/Wbg2JhR4/go-to-the-shop.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/go_to_the_shop_rp5pux.wav",
+        phrase: "go to the shop"
+      },
+      {
+        image: "https://i.postimg.cc/c4ws8rqr/play-the-guitar.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/play_the_guitar_mz3asa.wav",
+        phrase: "play the guitar"
+      },
+      {
+        image: "https://i.postimg.cc/tCWXVY07/read-a-newspaper.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/read_a_newspaper_ew6nxj.wav",
+        phrase: "read a newspaper"
+      },
+      {
+        image: "https://i.postimg.cc/DyL2b8VX/surf-the-internet.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/surf_the_internet_grtqm1.wav",
+        phrase: "surf the internet"
+      },
+      {
+        image: "https://i.postimg.cc/4NVJhmCy/use-the-phone.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/use_the_phone_eaksen.wav",
+        phrase: "use the phone"
+      },
+      {
+        image: "https://i.postimg.cc/7Y0xTfvT/write-a-story.webp",
+        audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/write_a_story_g7kd5t.wav",
+        phrase: "write a story"
+      }
+    ];
+    // ============================================
 
-  <!-- Row 2: Shuffle (separate row, as you liked before) -->
-  <div class="shuffleRow">
-    <button id="shuffle" type="button">🔀 Shuffle</button>
-  </div>
+    const stage = document.getElementById("cardStage");
+    const imgEl = document.getElementById("cardImg");
+    const textEl = document.getElementById("cardText");
 
-  <!-- Hidden front audio used for the image-side flip+play -->
-  <audio id="audioFront" preload="auto"></audio>
-</div>
+    const prevBtn = document.getElementById("prevBtn");
+    const playBtn = document.getElementById("playBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
 
-<script>
-const cards = [
-  {
-    image: "https://i.postimg.cc/Wbg2JhR4/go-to-the-shop.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/go_to_the_shop_rp5pux.wav",
-    text: "go to the shop"
-  },
-  {
-    image: "https://i.postimg.cc/c4ws8rqr/play-the-guitar.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/play_the_guitar_mz3asa.wav",
-    text: "play the guitar"
-  },
-  {
-    image: "https://i.postimg.cc/tCWXVY07/read-a-newspaper.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/read_a_newspaper_ew6nxj.wav",
-    text: "read a newspaper"
-  },
-  {
-    image: "https://i.postimg.cc/DyL2b8VX/surf-the-internet.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/surf_the_internet_grtqm1.wav",
-    text: "surf the internet"
-  },
-  {
-    image: "https://i.postimg.cc/4NVJhmCy/use-the-phone.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/use_the_phone_eaksen.wav",
-    text: "use the phone"
-  },
-  {
-    image: "https://i.postimg.cc/7Y0xTfvT/write-a-story.webp",
-    audio: "https://res.cloudinary.com/dugvo3tsb/video/upload/v1769842638/write_a_story_g7kd5t.wav",
-    text: "write a story"
-  }
-];
+    let order = cards.map((_, i) => i);
+    let idx = 0;
 
-let index = 0;
-let flipped = false;
+    const audio = new Audio();
+    audio.preload = "auto";
 
-const cardEl = document.getElementById("card");
-const backControlsEl = document.getElementById("backControls");
+    function currentCard(){
+      return cards[order[idx]];
+    }
 
-const audioFront = document.getElementById("audioFront");
-const audioBack = document.getElementById("audioBack");
-const audioBackSource = document.getElementById("audioBackSource");
+    function stopAudio(){
+      audio.pause();
+      audio.currentTime = 0;
+    }
 
-function stopAllAudio(){
-  audioFront.pause();
-  audioFront.currentTime = 0;
+    function render(){
+      const c = currentCard();
+      imgEl.src = c.image;
+      textEl.textContent = c.phrase;
 
-  audioBack.pause();
-  try { audioBack.currentTime = 0; } catch (e) {}
-}
+      // Always show image side when changing cards
+      stage.classList.remove("flipped");
+      stopAudio();
 
-function showImageSide(){
-  flipped = false;
-  backControlsEl.classList.add("hidden");
-  cardEl.innerHTML = `<img src="${cards[index].image}" alt="">`;
-}
+      // Preload next audio quickly
+      audio.src = c.audio;
+      audio.load();
+    }
 
-function showTextSide(){
-  flipped = true;
-  cardEl.innerHTML = `<div class="textSide">${cards[index].text}</div>`;
-  backControlsEl.classList.remove("hidden");
-}
+    function flipToText(){
+      stage.classList.add("flipped");
+    }
 
-function render(){
-  flipped = false;
-  stopAllAudio();
+    function flipToImage(){
+      stage.classList.remove("flipped");
+    }
 
-  // Set both audio elements to the correct file
-  audioFront.src = cards[index].audio;
-  audioFront.load();
+    // Middle play behavior:
+    // - if image side: flip to text and play
+    // - if text side: replay from start
+    function flipAndPlay(){
+      const c = currentCard();
+      audio.src = c.audio; // ensure correct
+      audio.currentTime = 0;
 
-  audioBackSource.src = cards[index].audio;
-  audioBack.load();
+      if (!stage.classList.contains("flipped")){
+        flipToText();
+        // small delay so flip feels synced
+        setTimeout(() => audio.play().catch(()=>{}), 60);
+      } else {
+        audio.play().catch(()=>{});
+      }
+    }
 
-  showImageSide();
-}
+    function next(){
+      idx = (idx + 1) % order.length;
+      render();
+    }
 
-async function flipAndPlay(){
-  if (flipped) return; // do nothing if text is showing (prevents audio-on-text)
+    function prev(){
+      idx = (idx - 1 + order.length) % order.length;
+      render();
+    }
 
-  // play audio immediately (image side only)
-  try{
-    audioFront.currentTime = 0;
-    await audioFront.play();
-  }catch(e){
-    // if blocked, still flip
-  }
+    function shuffle(){
+      // Fisher–Yates
+      for (let i = order.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      idx = 0;
+      render();
+    }
 
-  // flip to text
-  showTextSide();
-}
+    // Clicking the card:
+    // - image side: flip + play
+    // - text side: flip back (no audio)
+    stage.addEventListener("click", () => {
+      if (!stage.classList.contains("flipped")){
+        flipAndPlay();
+      } else {
+        flipToImage();
+        stopAudio();
+      }
+    });
 
-/* Clicking the IMAGE should do the same as the middle button:
-   flip + play immediately.
-   Clicking the TEXT does nothing (and audio is blocked anyway). */
-cardEl.addEventListener("click", () => {
-  if (!flipped) {
-    flipAndPlay();
-  }
-});
+    playBtn.addEventListener("click", flipAndPlay);
+    nextBtn.addEventListener("click", next);
+    prevBtn.addEventListener("click", prev);
+    shuffleBtn.addEventListener("click", shuffle);
 
-function prevCard(){
-  index = (index - 1 + cards.length) % cards.length;
-  render();
-}
-
-function nextCard(){
-  index = (index + 1) % cards.length;
-  render();
-}
-
-function shuffleCard(){
-  index = Math.floor(Math.random() * cards.length);
-  render();
-}
-
-// Button bindings
-document.getElementById("prev").addEventListener("click", prevCard);
-document.getElementById("next").addEventListener("click", nextCard);
-document.getElementById("flipPlay").addEventListener("click", flipAndPlay);
-document.getElementById("shuffle").addEventListener("click", shuffleCard);
-
-// Enforce: no audible audio while text is showing
-audioBack.addEventListener("play", () => {
-  audioBack.pause();
-  try { audioBack.currentTime = 0; } catch (e) {}
-});
-
-render();
-</script>
+    // Initial
+    render();
+  </script>
 </body>
 </html>

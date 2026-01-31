@@ -3,119 +3,92 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <title>Flashcards</title>
 
-<!-- Patrick Hand -->
+<!-- Patrick Hand font -->
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 
 <style>
-  * {
+  body {
+    margin: 0;
+    background: #0f0f0f;
+    color: #fff;
+    font-family: 'Patrick Hand', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    padding: 16px;
     box-sizing: border-box;
   }
 
-  body {
-    margin: 0;
-    font-family: 'Patrick Hand', cursive;
-    background: #111;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  .card-container {
-    width: min(85vw, 480px);
-    aspect-ratio: 1 / 1;
-    perspective: 1200px;
-    margin-top: 16px;
-  }
-
   .card {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.6s;
-    cursor: pointer;
-  }
-
-  .card.flipped {
-    transform: rotateY(180deg);
-  }
-
-  .side {
-    position: absolute;
-    inset: 0;
-    backface-visibility: hidden;
-    border-radius: 16px;
     background: #000;
+    border-radius: 16px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
   }
 
-  .front img {
+  .card img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     border-radius: 16px;
   }
 
-  .back {
-    transform: rotateY(180deg);
-    font-size: 2.5em;
-    text-align: center;
-    padding: 20px;
-  }
-
   .controls {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    max-width: 480px;
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 12px;
-    background: #111;
+    gap: 12px;
+    margin-top: 16px;
   }
 
   button {
     flex: 1;
-    height: 48px;
+    font-family: inherit;
+    font-size: 1.2rem;
+    padding: 14px 10px;
     border-radius: 12px;
     border: none;
-    font-family: 'Patrick Hand', cursive;
-    font-size: 1.2em;
+    background: #f1f1f1;
+    color: #000;
     cursor: pointer;
   }
 
   button:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
+  }
+
+  audio {
+    display: none;
   }
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<div class="card-container">
-  <div class="card" id="card">
-    <div class="side front">
-      <img id="cardImage" src="" alt="">
-    </div>
-    <div class="side back" id="cardText"></div>
+  <div class="card" id="card"></div>
+
+  <div class="controls">
+    <button id="prev">◀</button>
+    <button id="play">▶</button>
+    <button id="shuffle">🔀 Shuffle</button>
   </div>
-</div>
 
-<div class="controls">
-  <button onclick="prevCard()">◀</button>
-  <button onclick="nextCard()">▶</button>
-  <button onclick="shuffleCards()">🔀</button>
+  <audio id="audio"></audio>
 </div>
-
-<audio id="audio"></audio>
 
 <script>
 const cards = [
@@ -152,48 +125,40 @@ const cards = [
 ];
 
 let index = 0;
+let flipped = false;
 
 const card = document.getElementById("card");
-const img = document.getElementById("cardImage");
-const text = document.getElementById("cardText");
 const audio = document.getElementById("audio");
 
-function showCard() {
-  card.classList.remove("flipped");
-  img.src = cards[index].image;
-  text.textContent = cards[index].text;
+function render() {
+  flipped = false;
+  card.innerHTML = `<img src="${cards[index].image}" alt="">`;
   audio.src = cards[index].audio;
 }
 
 card.addEventListener("click", () => {
-  if (!card.classList.contains("flipped")) {
-    audio.currentTime = 0;
-    audio.play();
+  if (!flipped) {
+    card.textContent = cards[index].text;
+    flipped = true;
   }
-  card.classList.toggle("flipped");
 });
 
-function nextCard() {
-  index = (index + 1) % cards.length;
-  showCard();
-}
-
-function prevCard() {
+document.getElementById("prev").onclick = () => {
   index = (index - 1 + cards.length) % cards.length;
-  showCard();
-}
+  render();
+};
 
-function shuffleCards() {
-  for (let i = cards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [cards[i], cards[j]] = [cards[j], cards[i]];
-  }
-  index = 0;
-  showCard();
-}
+document.getElementById("play").onclick = () => {
+  audio.currentTime = 0;
+  audio.play();
+};
 
-showCard();
+document.getElementById("shuffle").onclick = () => {
+  index = Math.floor(Math.random() * cards.length);
+  render();
+};
+
+render();
 </script>
-
 </body>
 </html>

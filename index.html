@@ -8,82 +8,88 @@
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 
 <style>
-  body {
-    margin: 0;
-    background: #0f0f0f;
-    color: #fff;
-    font-family: 'Patrick Hand', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  body{
+    margin:0;
+    background:#0f0f0f;
+    color:#fff;
+    font-family:'Patrick Hand', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    padding:16px;
+    box-sizing:border-box;
   }
 
-  .app {
-    width: 100%;
-    max-width: 480px;
-    padding: 16px;
-    box-sizing: border-box;
+  .card{
+    background:#000;
+    border-radius:16px;
+    width:100%;
+    aspect-ratio:1/1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    cursor:pointer;
+    user-select:none;
+    overflow:hidden;
+    position:relative;
   }
 
-  .card {
-    background: #000;
-    border-radius: 16px;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.5rem;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    overflow: hidden;
+  .card img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
   }
 
-  .card img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
+  .textSide{
+    padding:20px;
+    font-size:2.5rem;
+    line-height:1.15;
   }
 
-  .controlsRow {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
+  .backControls{
+    width:100%;
+    padding:14px 14px 16px;
+    box-sizing:border-box;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    background:#0f0f0f;
   }
 
-  .controlsRow button {
-    flex: 1;
+  .backControls.hidden{ display:none; }
+
+  audio{
+    width:100%;
+    max-width:320px;
+    height:34px;
   }
 
-  .shuffleRow {
-    margin-top: 12px;
+  .controlsRow{
+    display:flex;
+    gap:12px;
+    margin-top:14px;
   }
 
-  .shuffleRow button {
-    width: 100%;
+  button{
+    flex:1;
+    font-family:inherit;
+    font-size:1.2rem;
+    padding:14px 10px;
+    border-radius:12px;
+    border:none;
+    background:#f1f1f1;
+    color:#000;
+    cursor:pointer;
   }
-
-  button {
-    font-family: inherit;
-    font-size: 1.2rem;
-    padding: 14px 10px;
-    border-radius: 12px;
-    border: none;
-    background: #f1f1f1;
-    color: #000;
-    cursor: pointer;
-  }
-
-  button:active {
-    transform: scale(0.97);
-  }
-
-  audio {
-    display: none;
-  }
+  button:active{ transform:scale(0.97); }
 </style>
 </head>
 
@@ -91,19 +97,23 @@
 <div class="app">
   <div class="card" id="card"></div>
 
-  <!-- Row 1: Prev / Play / Next -->
+  <!-- Back-side play control (only visible when flipped) -->
+  <div class="backControls hidden" id="backControls">
+    <audio id="audioBack" controls>
+      <source id="audioBackSource" src="" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+  <!-- Bottom buttons -->
   <div class="controlsRow">
-    <button id="prev" type="button">◀</button>
-    <button id="play" type="button">▶</button>
-    <button id="next" type="button">▶▶</button>
+    <button id="prev" type="button">⏪</button>
+    <button id="flipPlay" type="button">▶</button>
+    <button id="next" type="button">⏩</button>
   </div>
 
-  <!-- Row 2: Shuffle (icon + text) -->
-  <div class="shuffleRow">
-    <button id="shuffle" type="button">🔀 Shuffle</button>
-  </div>
-
-  <audio id="audio"></audio>
+  <!-- Hidden audio used only for the middle button (image side only) -->
+  <audio id="audioFront" preload="auto"></audio>
 </div>
 
 <script>
@@ -144,46 +154,105 @@ let index = 0;
 let flipped = false;
 
 const cardEl = document.getElementById("card");
-const audioEl = document.getElementById("audio");
+const backControlsEl = document.getElementById("backControls");
 
-function render() {
-  flipped = false;
-  cardEl.innerHTML = `<img src="${cards[index].image}" alt="">`;
-  audioEl.src = cards[index].audio;
+const audioFront = document.getElementById("audioFront");
+const audioBack = document.getElementById("audioBack");
+const audioBackSource = document.getElementById("audioBackSource");
+
+function stopAllAudio(){
+  audioFront.pause();
+  audioFront.currentTime = 0;
+
+  audioBack.pause();
+  try { audioBack.currentTime = 0; } catch (e) {}
 }
 
-function prevCard() {
+function render(){
+  // Always return to image side on navigation
+  flipped = false;
+  backControlsEl.classList.add("hidden");
+
+  // Stop audio any time we change cards
+  stopAllAudio();
+
+  // Render image side
+  cardEl.innerHTML = `<img src="${cards[index].image}" alt="">`;
+
+  // Set both audio elements to the correct file
+  audioFront.src = cards[index].audio;
+  audioFront.load();
+
+  audioBackSource.src = cards[index].audio;
+  audioBack.load();
+}
+
+function showTextSide(){
+  flipped = true;
+  cardEl.innerHTML = `<div class="textSide">${cards[index].text}</div>`;
+  backControlsEl.classList.remove("hidden");
+}
+
+function showImageSide(){
+  flipped = false;
+  backControlsEl.classList.add("hidden");
+  cardEl.innerHTML = `<img src="${cards[index].image}" alt="">`;
+}
+
+function prevCard(){
   index = (index - 1 + cards.length) % cards.length;
   render();
 }
 
-function nextCard() {
+function nextCard(){
   index = (index + 1) % cards.length;
   render();
 }
 
-function playAudio() {
-  audioEl.currentTime = 0;
-  audioEl.play();
-}
+/*
+  Middle button behavior:
+  - Only works from IMAGE side.
+  - When pressed: plays audio AND flips to text side.
+  - When already flipped (text showing): DO NOT play audio, do nothing.
+*/
+async function flipAndPlay(){
+  if (flipped) return; // do not allow audio while text is showing
 
-function shuffleCard() {
-  index = Math.floor(Math.random() * cards.length);
-  render();
-}
-
-cardEl.addEventListener("click", () => {
-  if (!flipped) {
-    cardEl.textContent = cards[index].text;
-    flipped = true;
+  // Start audio immediately
+  try {
+    audioFront.currentTime = 0;
+    await audioFront.play();
+  } catch (e) {
+    // If autoplay is blocked for some reason, it still flips.
   }
+
+  // Flip to text side
+  showTextSide();
+}
+
+// Clicking the card itself should NOT play audio.
+// Optional: tap card to flip back to image side only.
+cardEl.addEventListener("click", () => {
+  if (flipped) {
+    // When text is showing, tap card returns to image side and stops audio.
+    stopAllAudio();
+    showImageSide();
+  }
+  // If image is showing, tapping the card does nothing.
 });
 
-// IMPORTANT: each button has its own correct handler
+// Buttons
 document.getElementById("prev").addEventListener("click", prevCard);
 document.getElementById("next").addEventListener("click", nextCard);
-document.getElementById("play").addEventListener("click", playAudio);
-document.getElementById("shuffle").addEventListener("click", shuffleCard);
+document.getElementById("flipPlay").addEventListener("click", flipAndPlay);
+
+// Safety: if back-side audio starts, immediately stop it (enforces your rule)
+audioBack.addEventListener("play", () => {
+  // You said: "I don't want to be able to hear the audio with the text showing"
+  // So we block audio playback on the text side entirely.
+  audioBack.pause();
+  try { audioBack.currentTime = 0; } catch (e) {}
+});
 
 render();
 </script>
